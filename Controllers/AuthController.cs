@@ -32,19 +32,19 @@ namespace WasherService.Controllers
             user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password); // Hash Password
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
-            return Ok("Washer registered successfully!");
+            return Ok(new {message="Washer registered successfully!"});
         }
 
         // 🔹 Admin Login (Signin)
-        [HttpPost("signin")]
-        public async Task<IActionResult> Login([FromBody] User user)
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest user)
         {
             var dbAdmin = await _context.Users.FirstOrDefaultAsync(a => a.Email == user.Email);
             if (dbAdmin == null || !BCrypt.Net.BCrypt.Verify(user.Password, dbAdmin.Password))
                 return Unauthorized("Invalid credentials!");
 
             var token = GenerateJwtToken(dbAdmin);
-            return Ok(new { Token = token });
+            return Ok(new { Token = token,user=dbAdmin });
         }
 
         private string GenerateJwtToken(User user)
@@ -52,9 +52,13 @@ namespace WasherService.Controllers
             var key = Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"]);
             var claims = new List<Claim>
             {
-                new Claim("mainId", user.MainId.ToString()),
-                 new Claim("id", user.Id.ToString()),
-                new Claim("email", user.Email)
+                // new Claim("mainId", user.MainId.ToString()),
+                //  new Claim("id", user.Id.ToString()),
+                // new Claim("email", user.Email)
+
+        new Claim(JwtRegisteredClaimNames.Sub,  user.Id.ToString()),
+            new Claim("MainId", user.MainId.ToString()),
+               new Claim("email", user.Email),
             };
 
             var token = new JwtSecurityToken(
@@ -68,4 +72,10 @@ namespace WasherService.Controllers
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
+}
+
+public class LoginRequest
+{
+    public string Email { get; set; }
+    public string Password { get; set; }
 }

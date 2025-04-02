@@ -44,10 +44,12 @@ builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
 app.UseRouting();
+app.UseMiddleware<JwtMiddleware>();
 app.UseCors("AllowAll"); // ✅ Apply CORS policy
 app.UseAuthorization();  // Enable authorization
 app.UseAuthentication(); // Enable authentication
